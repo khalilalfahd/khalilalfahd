@@ -1,0 +1,9 @@
+package com.hskacademy.app;
+import android.app.Activity;import android.os.Bundle;import android.speech.tts.TextToSpeech;import android.webkit.JavascriptInterface;import android.webkit.WebChromeClient;import android.webkit.WebSettings;import android.webkit.WebView;import android.widget.Toast;import java.util.Locale;
+public class MainActivity extends Activity {
+ WebView w; TextToSpeech tts; boolean voiceReady=false;
+ @Override public void onCreate(Bundle b){super.onCreate(b);w=new WebView(this);WebSettings s=w.getSettings();s.setJavaScriptEnabled(true);s.setDomStorageEnabled(true);s.setAllowFileAccess(true);s.setAllowContentAccess(false);s.setDefaultTextEncodingName("UTF-8");w.setWebChromeClient(new WebChromeClient());w.addJavascriptInterface(new Bridge(),"AndroidTTS");setContentView(w);tts=new TextToSpeech(this,status->{if(status==TextToSpeech.SUCCESS&&tts!=null){Locale zh=Locale.SIMPLIFIED_CHINESE;voiceReady=tts.isLanguageAvailable(zh)>=TextToSpeech.LANG_AVAILABLE&&tts.setLanguage(zh)>=TextToSpeech.LANG_AVAILABLE;}});w.loadUrl("file:///android_asset/index.html"); }
+ public class Bridge{@JavascriptInterface public void speak(String text,double rate){runOnUiThread(()->{if(tts==null||!voiceReady){Toast.makeText(MainActivity.this,"ثبّت صوت Mandarin الصيني من إعدادات تحويل النص إلى كلام.",Toast.LENGTH_LONG).show();return;}if(text==null||text.isEmpty())return;tts.setSpeechRate((float)Math.min(1.2,Math.max(.55,rate)));tts.speak(text,TextToSpeech.QUEUE_FLUSH,null,"hsk-speech");});}}
+ @Override public void onBackPressed(){if(w!=null&&w.canGoBack())w.goBack();else super.onBackPressed();}
+ @Override public void onDestroy(){if(tts!=null){tts.stop();tts.shutdown();}if(w!=null){w.removeJavascriptInterface("AndroidTTS");w.destroy();}super.onDestroy();}
+}
